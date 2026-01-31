@@ -12,7 +12,7 @@ async function startScrape() {
 
     // UI Loading State
     btn.disabled = true;
-    btn.innerText = "Processing...";
+    btn.innerText = "Processing (Max 50)..."; // Updated text
     spinner.classList.remove('d-none');
     resultsArea.classList.add('d-none');
     tableBody.innerHTML = '';
@@ -52,10 +52,13 @@ function renderTable(data) {
         const tr = document.createElement('tr');
         tr.className = index % 2 === 0 ? 'row-even' : 'row-odd';
         
+        // Helper to colorize "N/A"
+        const emailClass = item.email === "N/A" ? "text-secondary" : "text-info";
+        
         tr.innerHTML = `
             <td>${index + 1}</td>
             <td class="fw-bold text-white">${item.name}</td>
-            <td style="color: #4ade80;">${item.phone}</td>
+            <td class="${emailClass}">${item.email}</td> <td style="color: #4ade80;">${item.phone}</td>
             <td class="text-secondary small">${item.address}</td>
         `;
         tbody.appendChild(tr);
@@ -65,18 +68,25 @@ function renderTable(data) {
 function exportToCSV() {
     if (!scrapedData.length) return;
     
+    // Add Email to CSV Header
     let csvContent = "data:text/csv;charset=utf-8,";
-    csvContent += "Company Name,Contact Number,Address\n";
+    csvContent += "Company Name,Email,Contact Number,Address\n";
 
     scrapedData.forEach(row => {
-        const rowStr = `"${row.name}","${row.phone}","${row.address}"`;
+        // Clean data to prevent CSV breakage (remove commas inside text)
+        const name = row.name.replace(/,/g, '');
+        const email = row.email.replace(/,/g, '');
+        const phone = row.phone.replace(/,/g, '');
+        const address = row.address.replace(/,/g, ' ');
+
+        const rowStr = `"${name}","${email}","${phone}","${address}"`;
         csvContent += rowStr + "\n";
     });
 
     const encodedUri = encodeURI(csvContent);
     const link = document.createElement("a");
     link.setAttribute("href", encodedUri);
-    link.setAttribute("download", "seraphin_data.csv");
+    link.setAttribute("download", "seraphin_leads_with_email.csv");
     document.body.appendChild(link);
     link.click();
 }
